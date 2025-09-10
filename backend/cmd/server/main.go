@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/hungaikev/rootd/backend/internal/api/handlers"
 )
 
 func main() {
@@ -22,21 +23,40 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 4. Define the API endpoint group.
-	// This makes it easy to version your API in the future (e.g., /api/v1, /api/v2).
-	api := router.Group("/api/v1")
+	// API v1 group
+	apiV1 := router.Group("/api/v1")
 	{
-		// 5. Define the GET handler for the /forms endpoint.
-		// When a GET request is made to /api/v1/forms, this function is executed.
-		api.GET("/forms", func(c *gin.Context) {
-			// 6. Respond with a JSON object and an HTTP 200 OK status.
-			// gin.H is a shortcut for map[string]interface{}.
-			c.JSON(http.StatusOK, gin.H{
-				"status":  "success",
-				"message": "Forms endpoint acknowledged",
-			})
-		})
+		// Workflow Management Endpoints
+		workflows := apiV1.Group("/workflows")
+		{
+			workflows.POST("", handlers.CreateWorkflow)
+			workflows.GET("", handlers.ListWorkflows)
+			workflows.GET("/:workflowId", handlers.GetWorkflow)
+			workflows.PUT("/:workflowId", handlers.UpdateWorkflow)
+			workflows.PATCH("/:workflowId/status", handlers.UpdateWorkflowStatus)
+			workflows.DELETE("/:workflowId", handlers.DeleteWorkflow)
+			workflows.GET("/:workflowId/submissions", handlers.ListSubmissions)
+		}
+
+		// Submission Management Endpoints
+		submissions := apiV1.Group("/submissions")
+		{
+			submissions.GET("/:submissionId", handlers.GetSubmission)
+		}
 	}
+
+	// Public submission endpoint
+	public := router.Group("/w")
+	{
+		public.POST("/:workflowId/submit", handlers.SubmitForm)
+	}
+
+	// Health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
+	})
 
 	// 7. Start the HTTP server and listen on port 9000.
 	// The server will run indefinitely until it's stopped.
