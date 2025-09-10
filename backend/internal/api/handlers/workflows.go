@@ -6,8 +6,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hungaikev/rootd/backend/internal/logic"
 	"github.com/hungaikev/rootd/backend/internal/models"
 )
+
+type WorkflowHandlers struct {
+	services *logic.Services
+}
+
+// NewWorkflowHandlers creates a new workflow handlers instance
+func NewWorkflowHandlers(services *logic.Services) *WorkflowHandlers {
+	return &WorkflowHandlers{
+		services: services,
+	}
+}
 
 // CreateWorkflow handles the creation of a new workflow.
 // @Summary Create a new workflow
@@ -15,32 +27,27 @@ import (
 // @Tags Workflows
 // @Accept  json
 // @Produce  json
-// @Param   workflow     body    models.Workflow     true        "Workflow to create"
+// @Param   workflow     body    logic.CreateWorkflowRequest     true        "Workflow to create"
 // @Success 201 {object} models.Workflow
 // @Router /api/v1/workflows [post]
-func CreateWorkflow(c *gin.Context) {
-	var newWorkflow models.Workflow
-	if err := c.ShouldBindJSON(&newWorkflow); err != nil {
+func (h *WorkflowHandlers) CreateWorkflow(c *gin.Context) {
+	var req logic.CreateWorkflowRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set server-side fields
-	newWorkflow.ID = uuid.New().String()
-	newWorkflow.Status = models.WorkflowStatusDraft
-	newWorkflow.CreatedAt = time.Now()
-	newWorkflow.UpdatedAt = time.Now()
-
 	// TODO: Get OwnerID from authenticated user context
-	// newWorkflow.OwnerID = ...
+	// For now, using a placeholder
+	req.OwnerID = "00000000-0000-0000-0000-000000000000"
 
-	// TODO: Persist the new workflow to the database
-	// if err := db.Create(&newWorkflow).Error; err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create workflow"})
-	// 	return
-	// }
+	workflow, err := h.services.Workflow.CreateWorkflow(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	c.JSON(http.StatusCreated, newWorkflow)
+	c.JSON(http.StatusCreated, workflow)
 }
 
 // ListWorkflows handles listing all workflows for the authenticated user.
@@ -50,21 +57,15 @@ func CreateWorkflow(c *gin.Context) {
 // @Produce  json
 // @Success 200 {array} models.Workflow
 // @Router /api/v1/workflows [get]
-func ListWorkflows(c *gin.Context) {
+func (h *WorkflowHandlers) ListWorkflows(c *gin.Context) {
 	// TODO: Get OwnerID from authenticated user context
-	// ownerID := ...
+	// For now, using a placeholder
+	ownerID := "00000000-0000-0000-0000-000000000000"
 
-	// TODO: Fetch workflows from the database for the owner
-	// var workflows []models.Workflow
-	// if err := db.Where("owner_id = ?", ownerID).Find(&workflows).Error; err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve workflows"})
-	// 	return
-	// }
-
-	// Mock response
-	workflows := []models.Workflow{
-		{ID: uuid.New().String(), Name: "Q3 Customer NPS", Status: models.WorkflowStatusActive},
-		{ID: uuid.New().String(), Name: "Job Application", Status: models.WorkflowStatusDraft},
+	workflows, err := h.services.Workflow.ListWorkflows(c.Request.Context(), ownerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, workflows)
@@ -78,23 +79,13 @@ func ListWorkflows(c *gin.Context) {
 // @Param   workflowId     path    string     true        "Workflow ID"
 // @Success 200 {object} models.Workflow
 // @Router /api/v1/workflows/{workflowId} [get]
-func GetWorkflow(c *gin.Context) {
-	workflowId := c.Param("workflowId")
+func (h *WorkflowHandlers) GetWorkflow(c *gin.Context) {
+	workflowID := c.Param("workflowId")
 
-	// TODO: Fetch workflow from the database
-	// var workflow models.Workflow
-	// if err := db.First(&workflow, "id = ?", workflowId).Error; err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "Workflow not found"})
-	// 	return
-	// }
-
-	// Mock response
-	workflow := models.Workflow{
-		ID:        workflowId,
-		Name:      "Q3 Customer NPS",
-		Status:    models.WorkflowStatusActive,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	workflow, err := h.services.Workflow.GetWorkflow(c.Request.Context(), workflowID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Workflow not found"})
+		return
 	}
 
 	c.JSON(http.StatusOK, workflow)

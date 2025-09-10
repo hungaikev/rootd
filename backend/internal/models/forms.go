@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // Field represents a single, universal field in a form.
 // It contains all possible attributes for any field type. The 'type' property
 // determines which attributes are used by the frontend renderer and backend validator.
@@ -69,4 +71,15 @@ type DataSource struct {
 	Endpoint   string `json:"endpoint"`   // URL for the API endpoint
 	ValueField string `json:"valueField"` // The field in the response to use as the value
 	LabelField string `json:"labelField"` // The field in the response to use as the label
+}
+
+// Form represents a form schema definition.
+type Form struct {
+	ID          string                 `json:"id"`          // UUID for the form.
+	Name        string                 `json:"name"`        // User-defined name for the form.
+	Description string                 `json:"description"` // Optional description of the form.
+	Schema      map[string]interface{} `json:"schema"`      // The form schema definition.
+	OwnerID     string                 `json:"ownerId"`     // The user who owns this form.
+	CreatedAt   time.Time              `json:"createdAt"`   // Timestamp of creation.
+	UpdatedAt   time.Time              `json:"updatedAt"`   // Timestamp of last update.
 }

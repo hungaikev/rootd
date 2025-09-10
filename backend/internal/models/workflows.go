@@ -35,6 +35,16 @@ const (
 	ActionTypeCondition    ActionType = "condition"
 )
 
+// SubmissionStatus represents the processing state of a submission.
+type SubmissionStatus string
+
+const (
+	SubmissionStatusPending    SubmissionStatus = "pending"
+	SubmissionStatusProcessing SubmissionStatus = "processing"
+	SubmissionStatusCompleted  SubmissionStatus = "completed"
+	SubmissionStatusFailed     SubmissionStatus = "failed"
+)
+
 // Workflow represents the operational controller for a form schema.
 // It defines the trigger, manages the state, and contains the sequence of actions to be executed.
 type Workflow struct {
@@ -78,12 +88,14 @@ type SubmissionSummary struct {
 
 // Submission represents a single data entry for a form through an active workflow.
 type Submission struct {
-	ID         string             `json:"id"`         // UUID for the submission.
-	WorkflowID string             `json:"workflowId"` // The ID of the workflow it belongs to.
-	SchemaID   string             `json:"schemaId"`   // The ID of the schema used for this submission.
-	CreatedAt  time.Time          `json:"createdAt"`  // Timestamp of submission.
-	Data       json.RawMessage    `json:"data"`       // The submitted form data, stored as raw JSON.
-	Metadata   SubmissionMetadata `json:"metadata"`   // Additional metadata about the submission context.
+	ID         string                 `json:"id"`         // UUID for the submission.
+	WorkflowID string                 `json:"workflowId"` // The ID of the workflow it belongs to.
+	SchemaID   string                 `json:"schemaId"`   // The ID of the schema used for this submission.
+	CreatedAt  time.Time              `json:"createdAt"`  // Timestamp of submission.
+	UpdatedAt  time.Time              `json:"updatedAt"`  // Timestamp of last update.
+	Data       map[string]interface{} `json:"data"`       // The submitted form data.
+	Metadata   SubmissionMetadata     `json:"metadata"`   // Additional metadata about the submission context.
+	Status     SubmissionStatus       `json:"status"`     // Processing status of the submission.
 }
 
 // SubmissionMetadata contains contextual information about a submission.
